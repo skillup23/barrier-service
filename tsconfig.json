@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "scripts/seed.js", "components/Providers.jsx", "app/layout.jsx", "app/api/auth/[...nextauth]/route.js"  ],
   "exclude": ["node_modules"]
 }
