@@ -3,6 +3,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, startTransition } from 'react';
+import Link from 'next/link';
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
@@ -143,12 +144,20 @@ export default function AdminDashboard() {
               <span className="font-medium text-gray-700">{user.phone}</span>
             </p>
           </div>
-          <button
-            onClick={() => signOut({ callbackUrl: '/login' })}
-            className="px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 transition font-medium"
-          >
-            Выйти
-          </button>
+          <div className="flex gap-2">
+            <Link
+              href="/admin/users"
+              className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium"
+            >
+              👥 Список жителей
+            </Link>
+            <button
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              className="px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 transition font-medium"
+            >
+              Выйти
+            </button>
+          </div>
         </div>
 
         <div className="space-y-8">

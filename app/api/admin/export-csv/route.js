@@ -20,18 +20,23 @@ export async function GET() {
     });
 
     // Собираем все разрешенные номера телефонов из массива phones
-    let csvContent = 'id;telephon;out\n';
+    // \uFEFF добавляет Byte Order Mark (BOM) для корректного открытия UTF-8 в Excel
+    let csvContent = '\uFEFFid;telephon;out\n';
     let counter = 1;
 
     activeUsers.forEach((user) => {
       user.phones.forEach((item) => {
         if (item.phone) {
-          // Форматируем номер без + для шлагбаума (7928XXXXXXX)
-          let cleanPhone = item.phone.replace(/\D/g, '');
-          if (cleanPhone.startsWith('8') && cleanPhone.length === 11) {
-            cleanPhone = '7' + cleanPhone.slice(1);
+          let digits = item.phone.replace(/\D/g, '');
+          if (
+            digits.length === 11 &&
+            (digits.startsWith('7') || digits.startsWith('8'))
+          ) {
+            digits = digits.slice(1);
           }
-          csvContent += `${counter};${cleanPhone};0\n`;
+          // ПУНКТ 3: Формат с +7
+          const formattedPhone = `+7${digits}`;
+          csvContent += `${counter};${formattedPhone};0\n`;
           counter++;
         }
       });
@@ -45,7 +50,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('Ошибка экспорта CSV:', error);
+    console.error('Ошибка CSV:', error);
     return NextResponse.json(
       { error: 'Не удалось сгенерировать CSV' },
       { status: 500 },

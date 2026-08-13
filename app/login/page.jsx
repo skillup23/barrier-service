@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const [phone, setPhone] = useState('');
@@ -86,6 +87,17 @@ export default function LoginPage() {
           >
             {loading ? 'Вход...' : 'Войти'}
           </button>
+
+          <p className="text-xs text-gray-500 mt-2">
+            Нажимая кнопку, вы принимаете{' '}
+            <Link href="/terms" className="text-blue-600 hover:underline">
+              Условия использования
+            </Link>{' '}
+            и даете{' '}
+            <Link href="/privacy" className="text-blue-600 hover:underline">
+              согласие на обработку персональных данных
+            </Link>
+          </p>
         </form>
       </div>
     </div>

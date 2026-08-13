@@ -6,12 +6,10 @@ import Payment from '@/models/Payment';
 import User from '@/models/User';
 
 // GET: Получение всех чеков (с фильтрацией по статусу)
-export async function GET(req) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    const userRole = session?.user?.['role'];
-
-    if (!session || userRole !== 'admin') {
+    if (!session || session.user?.['role'] !== 'admin') {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
     }
 
@@ -24,9 +22,8 @@ export async function GET(req) {
 
     return NextResponse.json({ payments });
   } catch (error) {
-    console.error('Ошибка при получении списка платежей:', error);
     return NextResponse.json(
-      { error: 'Не удалось загрузить платежи' },
+      { error: error.message || 'Ошибка загрузки платежей' },
       { status: 500 },
     );
   }
@@ -36,9 +33,7 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const session = await getServerSession(authOptions);
-    const userRole = session?.user?.['role'];
-
-    if (!session || userRole !== 'admin') {
+    if (!session || session.user?.['role'] !== 'admin') {
       return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
     }
 
@@ -47,13 +42,12 @@ export async function POST(req) {
 
     if (!paymentId || !['approved', 'rejected'].includes(action)) {
       return NextResponse.json(
-        { error: 'Неверные параметры запроса' },
+        { error: 'Неверные параметры' },
         { status: 400 },
       );
     }
 
     await connectToDatabase();
-
     const payment = await Payment.findById(paymentId);
     if (!payment) {
       return NextResponse.json({ error: 'Платёж не найден' }, { status: 404 });
@@ -82,12 +76,22 @@ export async function POST(req) {
         }
 
         const currentDate = new Date();
-        let newPaidUntil =
-          user.paidUntil && new Date(user.paidUntil) > currentDate
-            ? new Date(user.paidUntil)
-            : currentDate;
+        const oldPaidUntil = user.paidUntil
+          ? new Date(user.paidUntil)
+          : currentDate;
+        let newPaidUntil;
 
-        newPaidUntil.setDate(newPaidUntil.getDate() + addedDays);
+        // ПУНКТ 5: Расчет даты
+        if (user.status === 'disabled') {
+          // Если заблокирован: вычитаем 7 дней грейс-периода и отсчитываем от СЕГОДНЯ
+          const effectiveDays = Math.max(0, addedDays - 7);
+          newPaidUntil = new Date(currentDate);
+          newPaidUntil.setDate(newPaidUntil.getDate() + effectiveDays);
+        } else {
+          // Если active или grace: прибавляем дни строго к СТАРОЙ дате paidUntil
+          newPaidUntil = new Date(oldPaidUntil);
+          newPaidUntil.setDate(newPaidUntil.getDate() + addedDays);
+        }
 
         user.paidUntil = newPaidUntil;
         user.status = 'active';
@@ -97,19 +101,18 @@ export async function POST(req) {
         await user.save();
       }
     } else if (action === 'rejected') {
-      payment.rejectionReason = rejectionReason || 'Неверный чек или реквизиты';
+      payment.rejectionReason = rejectionReason || 'Неверный чек';
     }
 
     await payment.save();
-
     return NextResponse.json({
       success: true,
       message: `Платёж успешно ${action === 'approved' ? 'одобрен' : 'отклонен'}`,
     });
   } catch (error) {
-    console.error('Ошибка при модерации платежа:', error);
+    console.error('Ошибка модерации:', error);
     return NextResponse.json(
-      { error: 'Не удалось обработать платёж' },
+      { error: error.message || 'Ошибка обработки' },
       { status: 500 },
     );
   }

@@ -21,7 +21,7 @@ async function seed() {
     await User.deleteMany({});
     console.log('Коллекция users очищена.');
 
-    const defaultPassword = 'password1234';
+    const defaultPassword = 'password123';
     const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
     // Модератор
