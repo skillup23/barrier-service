@@ -184,7 +184,7 @@ export default function ResidentDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8">
+    <div className="min-h-screen bg-gray-100 p-1 md:p-8">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md p-6 md:p-8 space-y-6">
         {/* Шапка */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-4 border-b gap-4">
@@ -192,8 +192,8 @@ export default function ResidentDashboard() {
             <h1 className="text-2xl font-bold text-gray-800">
               Личный Кабинет Жителя
             </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              {sessionUser.name} | Тел:{' '}
+            <p className="text-lg text-gray-500 mt-1">
+              {sessionUser.name} | Тел:&nbsp;
               <span className="font-medium text-gray-700">
                 {sessionUser.phone}
               </span>
@@ -201,7 +201,7 @@ export default function ResidentDashboard() {
           </div>
           <button
             onClick={() => signOut({ callbackUrl: '/login' })}
-            className="px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 font-medium transition"
+            className="px-4 py-2 text-lg bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 font-medium transition cursor-pointer"
           >
             Выйти
           </button>
@@ -217,7 +217,7 @@ export default function ResidentDashboard() {
         >
           <div>
             <span
-              className={`inline-block px-3 py-1 text-xs font-bold rounded-full uppercase mb-2 ${
+              className={`inline-block px-3 py-1 text-sm font-bold rounded-full uppercase mb-2 ${
                 isExpired
                   ? 'bg-red-200 text-red-800'
                   : 'bg-green-200 text-green-800'
@@ -247,7 +247,7 @@ export default function ResidentDashboard() {
         </div>
 
         {/* Инфо об авто и адресе */}
-        <div className="bg-blue-50 p-5 rounded-xl border border-blue-200 text-sm text-blue-900 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-blue-50 p-5 rounded-xl border border-blue-200 text-base text-blue-900 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <span className="font-bold block mb-1">📍 Ваш Адрес:</span>
             {currentUser.address?.area}, ул. {currentUser.address?.street}, д.{' '}
@@ -264,24 +264,24 @@ export default function ResidentDashboard() {
 
         {/* Форма загрузки чека */}
         <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">
             Загрузить новый платёж (чек)
           </h2>
 
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm border border-red-200">
+            <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-lg border border-red-200">
               {error}
             </div>
           )}
           {message && (
-            <div className="bg-green-50 text-green-700 p-3 rounded-lg mb-4 text-sm border border-green-200">
+            <div className="bg-green-50 text-green-700 p-3 rounded-lg mb-4 text-lg border border-green-200">
               {message}
             </div>
           )}
 
           <form onSubmit={handleUploadPayment} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-lg font-medium text-gray-700 mb-1">
                 Сумма платежа (₽)
               </label>
               <input
@@ -290,11 +290,11 @@ export default function ResidentDashboard() {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 required
-                className="w-full md:w-1/2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none"
+                className="w-full md:w-1/2 px-4 py-2 text-lg border border-gray-300 rounded-lg focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-lg font-medium text-gray-700 mb-1">
                 Файл чека (PDF, JPG, PNG)
               </label>
               <input
@@ -303,7 +303,7 @@ export default function ResidentDashboard() {
                 accept=".pdf,image/jpeg,image/png,image/webp"
                 onChange={(e) => setFile(e.target.files[0])}
                 required
-                className="w-full text-sm text-gray-500 cursor-pointer border border-gray-300 rounded-lg focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                className="w-full text-lg text-gray-500 cursor-pointer border border-gray-300 rounded-lg focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-lg file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
               />
             </div>
             <div className="flex items-center gap-2 pt-1">
@@ -316,7 +316,7 @@ export default function ResidentDashboard() {
               />
               <label
                 htmlFor="entranceFee"
-                className="text-sm text-gray-700 select-none"
+                className="text-lg text-gray-700 select-none"
               >
                 Включает вступительный взнос 700 ₽ за первые 2 номера
                 (отмечайте, если регистрируетесь впервые)
@@ -325,11 +325,11 @@ export default function ResidentDashboard() {
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition disabled:opacity-50 shadow-sm cursor-pointer"
+              className="px-6 py-2.5 bg-blue-600 text-xl text-white font-medium rounded-lg hover:bg-blue-700 transition disabled:opacity-50 shadow-sm cursor-pointer"
             >
               {loading ? 'Отправка...' : 'Отправить чек модератору'}
             </button>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-sm text-gray-500 mt-2">
               Нажимая кнопку, вы принимаете{' '}
               <Link href="/terms" className="text-blue-600 hover:underline">
                 Условия использования
@@ -344,7 +344,7 @@ export default function ResidentDashboard() {
 
         {/* Форма редактирования данных и смены пароля */}
         <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 space-y-6">
-          <h2 className="text-lg font-bold text-gray-800">
+          <h2 className="text-xl font-bold text-gray-800">
             Управление личными данными
           </h2>
 
@@ -356,7 +356,7 @@ export default function ResidentDashboard() {
 
           {/* Редактирование авто и адреса */}
           <form onSubmit={handleUpdateInfo} className="space-y-4">
-            <h3 className="text-sm font-bold text-gray-700 border-b pb-1">
+            <h3 className="text-lg font-bold text-gray-700 border-b pb-1">
               Изменить адрес и автомобиль
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -365,21 +365,21 @@ export default function ResidentDashboard() {
                 placeholder="СНТ / Район"
                 value={area}
                 onChange={(e) => setArea(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-lg focus:outline-none"
               />
               <input
                 type="text"
                 placeholder="Улица"
                 value={street}
                 onChange={(e) => setStreet(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-lg focus:outline-none"
               />
               <input
                 type="text"
                 placeholder="Дом"
                 value={house}
                 onChange={(e) => setHouse(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-lg focus:outline-none"
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -388,19 +388,19 @@ export default function ResidentDashboard() {
                 placeholder="Марка машины (напр. Kia Rio)"
                 value={carModel}
                 onChange={(e) => setCarModel(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-lg focus:outline-none"
               />
               <input
                 type="text"
                 placeholder="Гос. номер (напр. А123АА23)"
                 value={carPlate}
                 onChange={(e) => setCarPlate(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-lg focus:outline-none"
               />
             </div>
             <button
               type="submit"
-              className="bg-gray-800 hover:bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer"
+              className="bg-gray-800 hover:bg-gray-900 text-white text-lg font-medium px-4 py-2 rounded-lg transition cursor-pointer"
             >
               Сохранить данные
             </button>
@@ -411,7 +411,7 @@ export default function ResidentDashboard() {
             onSubmit={handleChangePassword}
             className="space-y-4 pt-4 border-t border-gray-200"
           >
-            <h3 className="text-sm font-bold text-gray-700">Сменить пароль</h3>
+            <h3 className="text-lg font-bold text-gray-700">Сменить пароль</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <input
                 type="password"
@@ -419,7 +419,7 @@ export default function ResidentDashboard() {
                 value={oldPass}
                 onChange={(e) => setOldPass(e.target.value)}
                 required
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-lg focus:outline-none"
               />
               <input
                 type="password"
@@ -427,12 +427,12 @@ export default function ResidentDashboard() {
                 value={newPass}
                 onChange={(e) => setNewPass(e.target.value)}
                 required
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-lg focus:outline-none"
               />
             </div>
             <button
               type="submit"
-              className="bg-gray-800 hover:bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer"
+              className="bg-gray-800 hover:bg-gray-900 text-white text-lg font-medium px-4 py-2 rounded-lg transition cursor-pointer"
             >
               Обновить пароль
             </button>
@@ -442,14 +442,14 @@ export default function ResidentDashboard() {
         {/* Общая информация */}
         {/* Общая информация */}
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
-          <h2 className="text-lg font-bold text-gray-800 border-b pb-3">
+          <h2 className="text-xl font-bold text-gray-800 border-b pb-3">
             Справочная информация
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
             {/* Левая колонка: QR-код */}
             <div className="flex flex-col items-center sm:items-start bg-gray-50 p-4 rounded-xl border border-gray-100">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">
+              <span className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-3">
                 QR-код для быстрой оплаты
               </span>
               <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
@@ -461,7 +461,7 @@ export default function ResidentDashboard() {
                   className="rounded-md object-contain"
                 />
               </div>
-              <p className="text-xs text-gray-400 mt-2 text-center sm:text-left">
+              <p className="text-sm text-gray-400 mt-2 text-center sm:text-left">
                 Отсканируйте в приложении вашего банка
               </p>
             </div>
@@ -470,12 +470,12 @@ export default function ResidentDashboard() {
             <div className="space-y-4">
               {/* Телефон шлагбаума */}
               <div className="p-3.5 bg-gray-50 rounded-lg border border-gray-100">
-                <span className="block text-xs font-medium text-gray-500 mb-1">
+                <span className="block text-lg font-medium text-gray-500 mb-1">
                   Номер для открытия шлагбаума
                 </span>
                 <a
                   href="tel:89991234567"
-                  className="inline-flex items-center gap-2 text-lg font-bold text-blue-600 hover:text-blue-700 transition"
+                  className="inline-flex items-center gap-2 text-xl font-bold text-blue-600 hover:text-blue-700 transition"
                 >
                   📞 8 (999) 123-45-67
                 </a>
@@ -483,21 +483,21 @@ export default function ResidentDashboard() {
 
               {/* Техподдержка Telegram */}
               <div className="p-3.5 bg-gray-50 rounded-lg border border-gray-100">
-                <span className="block text-xs font-medium text-gray-500 mb-1">
+                <span className="block text-lg font-medium text-gray-500 mb-1">
                   Техническая поддержка
                 </span>
                 <a
                   href="https://t.me"
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 text-base font-bold text-sky-600 hover:text-sky-700 transition"
+                  className="inline-flex items-center gap-2 text-xl font-bold text-sky-600 hover:text-sky-700 transition"
                 >
                   💬 Написать в Telegram-чат
                 </a>
               </div>
 
               {/* Ссылка на условия */}
-              <div className="pt-2 flex flex-wrap gap-4 text-xs text-gray-500">
+              <div className="pt-2 flex flex-wrap gap-4 text-sm text-gray-500">
                 <Link
                   href="/terms"
                   target="_blank"

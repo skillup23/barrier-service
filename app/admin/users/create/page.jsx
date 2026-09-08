@@ -94,7 +94,7 @@ export default function CreateUserPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+              <label className="block text-sm font-bold text-gray-700 uppercase mb-1">
                 Номер телефона *
               </label>
               <input
@@ -107,7 +107,7 @@ export default function CreateUserPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+              <label className="block text-sm font-bold text-gray-700 uppercase mb-1">
                 Временный пароль *
               </label>
               <input
@@ -122,7 +122,7 @@ export default function CreateUserPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Фамилия
               </label>
               <input
@@ -133,7 +133,7 @@ export default function CreateUserPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Имя
               </label>
               <input
@@ -144,7 +144,7 @@ export default function CreateUserPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Отчество
               </label>
               <input
@@ -158,7 +158,7 @@ export default function CreateUserPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 СНТ / Район *
               </label>
               <input
@@ -170,7 +170,7 @@ export default function CreateUserPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Улица *
               </label>
               <input
@@ -182,7 +182,7 @@ export default function CreateUserPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Дом *
               </label>
               <input
@@ -197,7 +197,7 @@ export default function CreateUserPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Марка авто
               </label>
               <input
@@ -209,7 +209,7 @@ export default function CreateUserPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Гос. номер авто
               </label>
               <input
@@ -238,7 +238,7 @@ export default function CreateUserPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 rounded-lg transition disabled:opacity-50 mt-4"
+            className="w-full bg-green-600 hover:bg-green-700 text-base text-white font-medium py-2.5 rounded-lg transition disabled:opacity-50 mt-4"
           >
             {loading ? 'Создание...' : 'Зарегистрировать жителя'}
           </button>

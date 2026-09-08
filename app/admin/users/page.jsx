@@ -63,7 +63,7 @@ export default function AdminUsersPage() {
       <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-md p-6 md:p-8 space-y-6">
         {/* Навигация */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-4 border-b gap-4">
-          <div>
+          <div className="w-1/2">
             <h1 className="text-2xl font-bold text-gray-800">
               Список жителей поселка
             </h1>
@@ -71,16 +71,16 @@ export default function AdminUsersPage() {
               Всего зарегистрировано: {users.length}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="w-full md:w-1/2 flex gap-2 justify-between md:justify-end">
             <Link
               href="/admin/users/create"
-              className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+              className="bg-green-600 hover:bg-green-700 text-white text-base font-medium px-4 py-2 rounded-lg transition"
             >
               + Добавить жителя
             </Link>
             <Link
               href="/admin"
-              className="bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition"
+              className="bg-gray-200 hover:bg-gray-300 text-gray-700 text-base font-medium px-4 py-2 rounded-lg transition"
             >
               ← В панель чеков
             </Link>
@@ -148,13 +148,13 @@ export default function AdminUsersPage() {
                         ? new Date(u.paidUntil).toLocaleDateString('ru-RU')
                         : '—'}
                     </td>
-                    <td className="p-3 text-xs text-gray-600">
+                    <td className="p-3 text-sm text-gray-600">
                       {u.phones?.[0]?.carModel}{' '}
                       <span className="font-semibold">
                         {u.phones?.[0]?.carPlate}
                       </span>
                     </td>
-                    <td className="p-3 text-xs text-gray-600">
+                    <td className="p-3 text-sm text-gray-600">
                       {u.address?.area}, ул. {u.address?.street}, д.{' '}
                       {u.address?.house}
                     </td>
