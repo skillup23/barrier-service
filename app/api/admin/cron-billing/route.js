@@ -24,7 +24,7 @@ export async function POST() {
     let updatedActive = 0;
 
     for (const user of users) {
-      // 1. Проверяем наличие даты
+      // 1.Проверяем наличие даты
       if (!user.paidUntil) {
         // Если даты нет вовсе — блокируем пользователя
         if (user.status !== 'disabled') {
