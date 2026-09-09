@@ -132,14 +132,14 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-1 md:p-8">
-      <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-md p-6 md:p-8">
+      <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-md p-4 md:p-8">
         {/* Шапка */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-4 mb-6 border-b gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">
               Панель Модератора
             </h1>
-            <p className="text-xl md:text-sm text-gray-500 mt-1">
+            <p className="text-lg md:text-sm text-gray-500 mt-1">
               Администратор: {user.name} | Тел:&nbsp;
               <span className="font-medium text-gray-700">{user.phone}</span>
             </p>
@@ -147,13 +147,13 @@ export default function AdminDashboard() {
           <div className="w-full flex gap-2 justify-between md:justify-end">
             <Link
               href="/admin/users"
-              className="px-4 py-2 text-xl md:text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium"
+              className="px-4 py-2 text-lg md:text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium"
             >
               👥 Список жителей
             </Link>
             <button
               onClick={() => signOut({ callbackUrl: '/login' })}
-              className="px-6 py-2 text-xl md:text-sm bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 transition font-medium cursor-pointer"
+              className="px-6 py-2 text-lg md:text-sm bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 transition font-medium cursor-pointer"
             >
               Выйти
             </button>
@@ -170,23 +170,23 @@ export default function AdminDashboard() {
           {/* Блок быстрого управления и выгрузки CSV */}
           <div className="bg-blue-50 p-5 rounded-xl border border-blue-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="md:w-3/5">
-              <h3 className="font-bold text-blue-900 text-xl">
+              <h3 className="font-bold text-blue-900 text-lg">
                 Инструменты шлагбаума
               </h3>
-              <p className="text-base text-blue-700">
+              <p className="text-sm text-blue-700">
                 Выгрузка активных номеров и запуск проверки задолженностей.
               </p>
             </div>
             <div className="md:w-2/5 flex flex-wrap gap-4 md:gap-2 md:justify-end">
               <button
                 onClick={handleRunBilling}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-base font-medium px-4 py-2 rounded-lg transition cursor-pointer"
+                className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer"
               >
                 ⚡ Пересчитать долги (Grace/Disabled)
               </button>
               <button
                 onClick={handleDownloadCSV}
-                className="bg-green-600 hover:bg-green-700 text-white text-base font-medium px-4 py-2 rounded-lg transition cursor-pointer"
+                className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer"
               >
                 📥 Скачать CSV для шлагбаума
               </button>
@@ -195,7 +195,7 @@ export default function AdminDashboard() {
 
           {/* Очередь чеков */}
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">
               Очередь чеков на проверку
             </h2>
             {payments.length === 0 ? (

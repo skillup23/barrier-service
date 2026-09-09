@@ -12,34 +12,48 @@ export async function POST() {
     }
 
     await connectToDatabase();
-    const now = new Date();
+
+    // Текущая дата строго по началу дня
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     const users = await User.find({ role: 'user' });
     let updatedGrace = 0;
     let updatedDisabled = 0;
+    let updatedActive = 0;
 
     for (const user of users) {
-      const paidUntil = new Date(user.paidUntil || 0);
-      const diffMs = now - paidUntil;
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      if (!user.paidUntil) continue;
 
-      if (diffDays > 0 && diffDays <= 7) {
-        // Просрочка до 7 дней -> переводим в Grace
+      // Нормализуем дату окончания к началу дня
+      const paidDate = new Date(user.paidUntil);
+      paidDate.setHours(0, 0, 0, 0);
+
+      // Разница в полных календарных днях
+      const diffTime = today.getTime() - paidDate.getTime();
+      const overdueDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+      if (overdueDays >= 1 && overdueDays <= 7) {
+        // Просрочка от 1 до 7 дней включительно -> GRACE
         if (user.status !== 'grace') {
           user.status = 'grace';
           await user.save();
           updatedGrace++;
         }
-      } else if (diffDays > 7) {
-        // Просрочка больше 7 дней -> Выключаем
+      } else if (overdueDays > 7) {
+        // Просрочка 8 и более дней -> DISABLED
         if (user.status !== 'disabled') {
           user.status = 'disabled';
           await user.save();
           updatedDisabled++;
         }
-      } else if (diffDays <= 0 && user.status !== 'active') {
-        user.status = 'active';
-        await user.save();
+      } else {
+        // Срок еще не истек (overdueDays <= 0)
+        if (user.status !== 'active') {
+          user.status = 'active';
+          await user.save();
+          updatedActive++;
+        }
       }
     }
 

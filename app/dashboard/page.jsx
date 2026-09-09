@@ -4,7 +4,7 @@ import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, startTransition, useCallback } from 'react';
-import qrcode from '@/public/qr-code.png';
+import qrcode from '@/public/qrBank.jpg';
 import Link from 'next/link';
 
 export default function ResidentDashboard() {
@@ -185,7 +185,7 @@ export default function ResidentDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-1 md:p-8">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md p-6 md:p-8 space-y-6">
+      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md p-4 md:p-8 space-y-6">
         {/* Шапка */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-4 border-b gap-4">
           <div>
@@ -207,41 +207,66 @@ export default function ResidentDashboard() {
           </button>
         </div>
 
-        {/* Статус */}
+        {/* Блок Статуса жителя */}
         <div
           className={`p-6 rounded-xl border flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${
-            isExpired
+            currentUser.status === 'disabled'
               ? 'bg-red-50 border-red-200'
-              : 'bg-green-50 border-green-200'
+              : currentUser.status === 'grace'
+                ? 'bg-amber-50 border-amber-200'
+                : 'bg-green-50 border-green-200'
           }`}
         >
           <div>
             <span
-              className={`inline-block px-3 py-1 text-sm font-bold rounded-full uppercase mb-2 ${
-                isExpired
+              className={`inline-block px-3 py-1 text-xs font-bold rounded-full uppercase mb-2 ${
+                currentUser.status === 'disabled'
                   ? 'bg-red-200 text-red-800'
-                  : 'bg-green-200 text-green-800'
+                  : currentUser.status === 'grace'
+                    ? 'bg-amber-200 text-amber-800'
+                    : 'bg-green-200 text-green-800'
               }`}
             >
-              {isExpired
-                ? 'Статус: Требуется оплата'
-                : 'Статус: Проезд разрешен'}
+              {currentUser.status === 'disabled'
+                ? '⛔ Статус: Заблокирован'
+                : currentUser.status === 'grace'
+                  ? '⚠️ Статус: Грейс-период (льготный проезд)'
+                  : '✓ Статус: Проезд разрешен'}
             </span>
+
             <p
-              className={`text-base font-semibold ${isExpired ? 'text-red-900' : 'text-green-900'}`}
+              className={`text-base font-semibold ${
+                currentUser.status === 'disabled'
+                  ? 'text-red-900'
+                  : currentUser.status === 'grace'
+                    ? 'text-amber-900'
+                    : 'text-green-900'
+              }`}
             >
-              Оплачено до: <span className="underline">{dateStr}</span>
+              {currentUser.status === 'disabled'
+                ? `Проезд заблокирован. Оплата истекла: ${dateStr}`
+                : currentUser.status === 'grace'
+                  ? `Срок оплаты истек (${dateStr}). Пожалуйста, внесите платеж до отключения.`
+                  : `Оплачено до: ${dateStr}`}
             </p>
           </div>
+
           <div className="text-left md:text-right">
             <p className="text-xs text-gray-500 uppercase font-semibold">
-              Осталось дней
+              {currentUser.status === 'active'
+                ? 'Осталось дней'
+                : 'Дней просрочки'}
             </p>
             <p
-              className={`text-3xl font-extrabold ${isExpired ? 'text-red-600' : 'text-green-700'}`}
+              className={`text-3xl font-extrabold ${
+                currentUser.status === 'disabled'
+                  ? 'text-red-600'
+                  : currentUser.status === 'grace'
+                    ? 'text-amber-600'
+                    : 'text-green-700'
+              }`}
             >
-              {days}{' '}
-              {days === 1 ? 'день' : days >= 2 && days <= 4 ? 'дня' : 'дней'}
+              {days}
             </p>
           </div>
         </div>
@@ -440,7 +465,6 @@ export default function ResidentDashboard() {
         </div>
 
         {/* Общая информация */}
-        {/* Общая информация */}
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
           <h2 className="text-xl font-bold text-gray-800 border-b pb-3">
             Справочная информация
@@ -448,15 +472,15 @@ export default function ResidentDashboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
             {/* Левая колонка: QR-код */}
-            <div className="flex flex-col items-center sm:items-start bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <div className="flex flex-col items-center sm:items-center bg-gray-50 p-4 rounded-xl border border-gray-100">
               <span className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-3">
                 QR-код для быстрой оплаты
               </span>
               <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                 <Image
                   src={qrcode}
-                  width={180}
-                  height={180}
+                  width={220}
+                  height="auto"
                   alt="QR-код для платежей"
                   className="rounded-md object-contain"
                 />
@@ -474,10 +498,10 @@ export default function ResidentDashboard() {
                   Номер для открытия шлагбаума
                 </span>
                 <a
-                  href="tel:89991234567"
+                  href="tel:89892762294"
                   className="inline-flex items-center gap-2 text-xl font-bold text-blue-600 hover:text-blue-700 transition"
                 >
-                  📞 8 (999) 123-45-67
+                  📞 8 (989) 276-22-94
                 </a>
               </div>
 
@@ -487,12 +511,12 @@ export default function ResidentDashboard() {
                   Техническая поддержка
                 </span>
                 <a
-                  href="https://t.me"
+                  href="https://max.ru/join/bbjQHb-pe53EP3-ef5J-Ezvurt14hnDTdNlZTx9vE8o"
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-2 text-xl font-bold text-sky-600 hover:text-sky-700 transition"
                 >
-                  💬 Написать в Telegram-чат
+                  💬 Написать в MAX-чат
                 </a>
               </div>
 
