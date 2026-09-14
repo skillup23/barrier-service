@@ -16,8 +16,15 @@ export async function POST(req) {
     }
 
     const userId = session.user?.['id'];
-    const { action, address, carPlate, carModel, oldPassword, newPassword } =
-      await req.json();
+    const {
+      action,
+      fullName,
+      address,
+      carPlate,
+      carModel,
+      oldPassword,
+      newPassword,
+    } = await req.json();
 
     await connectToDatabase();
     const user = await User.findById(userId);
@@ -28,25 +35,54 @@ export async function POST(req) {
       );
     }
 
-    // Редактирование профиля
+    // Редактирование профиля (ФИО, адрес, автомобиль)
     if (action === 'update_info') {
-      if (address) {
-        user.address = {
-          area: address.area || user.address.area,
-          street: address.street || user.address.street,
-          house: address.house || user.address.house,
+      if (fullName) {
+        user.fullName = {
+          lastName:
+            fullName.lastName !== undefined
+              ? fullName.lastName.trim()
+              : user.fullName?.lastName || '',
+          firstName:
+            fullName.firstName !== undefined
+              ? fullName.firstName.trim()
+              : user.fullName?.firstName || '',
+          middleName:
+            fullName.middleName !== undefined
+              ? fullName.middleName.trim()
+              : user.fullName?.middleName || '',
         };
       }
-      if (user.phones && user.phones.length > 0) {
-        user.phones[0].carPlate =
-          carPlate !== undefined ? carPlate : user.phones[0].carPlate;
-        user.phones[0].carModel =
-          carModel !== undefined ? carModel : user.phones[0].carModel;
+
+      if (address) {
+        user.address = {
+          area:
+            address.area !== undefined
+              ? address.area.trim()
+              : user.address?.area || '',
+          street:
+            address.street !== undefined
+              ? address.street.trim()
+              : user.address?.street || '',
+          house:
+            address.house !== undefined
+              ? address.house.trim()
+              : user.address?.house || '',
+        };
       }
+
+      if (carPlate !== undefined || carModel !== undefined) {
+        if (!user.phones || user.phones.length === 0) {
+          user.phones = [{ phone: user.phone, carPlate: '', carModel: '' }];
+        }
+        if (carPlate !== undefined) user.phones[0].carPlate = carPlate.trim();
+        if (carModel !== undefined) user.phones[0].carModel = carModel.trim();
+      }
+
       await user.save();
       return NextResponse.json({
         success: true,
-        message: 'Данные профиля обновлены',
+        message: 'Данные профиля успешно сохранены',
       });
     }
 

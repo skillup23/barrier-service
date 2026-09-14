@@ -24,6 +24,10 @@ export async function POST() {
     let updatedActive = 0;
 
     for (const user of users) {
+      // Замороженных пользователей биллинг не трогает
+      if (user.status === 'frozen') {
+        continue;
+      }
       // 1.Проверяем наличие даты
       if (!user.paidUntil) {
         // Если даты нет вовсе — блокируем пользователя
@@ -93,7 +97,7 @@ export async function POST() {
 
     return NextResponse.json({
       success: true,
-      message: `Проверка завершена. В Grace-период: ${updatedGrace}, Заблокировано: ${updatedDisabled}, Активировано: ${updatedActive}`,
+      message: `Проверка завершена. Ожидают оплаты: ${updatedGrace}, Заблокировано: ${updatedDisabled}, Активировано: ${updatedActive}`,
     });
   } catch (error) {
     console.error('Критическая ошибка cron-billing:', error);

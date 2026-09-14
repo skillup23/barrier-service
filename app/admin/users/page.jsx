@@ -5,13 +5,20 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, startTransition, useCallback } from 'react';
 import Link from 'next/link';
 
+import UserFilterBar from '@/components/admin/users/UserFilterBar';
+import UserTableRow from '@/components/admin/users/UserTableRow';
+import UserEditModal from '@/components/admin/users/UserEditModal';
+
 export default function AdminUsersPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortOrder, setSortOrder] = useState('desc');
   const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -42,36 +49,47 @@ export default function AdminUsersPage() {
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600 bg-gray-50">
-        Загрузка...
+        Загрузка жителей...
       </div>
     );
   }
 
-  // Фильтрация поиска
+  // Фильтрация
   const filteredUsers = users.filter((u) => {
     const term = search.toLowerCase();
     const name =
-      `${u.fullName?.lastName} ${u.fullName?.firstName} ${u.fullName?.middleName}`.toLowerCase();
+      `${u.fullName?.lastName || ''} ${u.fullName?.firstName || ''} ${u.fullName?.middleName || ''}`.toLowerCase();
     const phone = u.phone || '';
     const addr =
-      `${u.address?.area} ${u.address?.street} ${u.address?.house}`.toLowerCase();
-    return name.includes(term) || phone.includes(term) || addr.includes(term);
+      `${u.address?.area || ''} ${u.address?.street || ''} ${u.address?.house || ''}`.toLowerCase();
+    const matchesSearch =
+      name.includes(term) || phone.includes(term) || addr.includes(term);
+    const matchesStatus = statusFilter === 'all' || u.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  // Сортировка
+  filteredUsers.sort((a, b) => {
+    const dateA = a.paidUntil ? new Date(a.paidUntil).getTime() : 0;
+    const dateB = b.paidUntil ? new Date(b.paidUntil).getTime() : 0;
+    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
   });
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-md p-6 md:p-8 space-y-6">
-        {/* Навигация */}
+      <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-md p-6 md:p-8 space-y-6">
+        {/* Шапка */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-4 border-b gap-4">
-          <div className="md:w-1/2">
-            <h1 className="text-xl font-bold text-gray-800">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">
               Список жителей поселка
             </h1>
             <p className="text-sm text-gray-500 mt-0.5">
-              Всего зарегистрировано: {users.length}
+              Всего в базе: {users.length} (отфильтровано:{' '}
+              {filteredUsers.length})
             </p>
           </div>
-          <div className="w-full md:w-1/2 flex gap-2 justify-between md:justify-end">
+          <div className="flex gap-2">
             <Link
               href="/admin/users/create"
               className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
@@ -87,16 +105,19 @@ export default function AdminUsersPage() {
           </div>
         </div>
 
-        {/* Поиск */}
-        <input
-          type="text"
-          placeholder="Поиск по ФИО, телефону или адресу..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none"
+        {/* Фильтры */}
+        <UserFilterBar
+          search={search}
+          onSearchChange={setSearch}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          sortOrder={sortOrder}
+          onToggleSort={() =>
+            setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')
+          }
         />
 
-        {/* Таблица жильцов */}
+        {/* Таблица */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm border-collapse">
             <thead>
@@ -107,63 +128,40 @@ export default function AdminUsersPage() {
                 <th className="p-3">Оплачен до</th>
                 <th className="p-3">Автомобиль</th>
                 <th className="p-3">Адрес</th>
+                <th className="p-3 text-right">Действие</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="p-4 text-center text-gray-500">
+                  <td colSpan="7" className="p-4 text-center text-gray-500">
                     Жители не найдены.
                   </td>
                 </tr>
               ) : (
                 filteredUsers.map((u) => (
-                  <tr key={u._id} className="hover:bg-gray-50 transition">
-                    <td className="p-3 font-medium text-gray-900 whitespace-nowrap">
-                      {u.phone}
-                    </td>
-                    <td className="p-3 text-gray-800">
-                      {u.fullName?.lastName} {u.fullName?.firstName}{' '}
-                      {u.fullName?.middleName}
-                    </td>
-                    <td className="p-3">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase ${
-                          u.status === 'active'
-                            ? 'bg-green-100 text-green-800'
-                            : u.status === 'grace'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {u.status === 'active'
-                          ? 'Активен'
-                          : u.status === 'grace'
-                            ? 'Грейс'
-                            : 'Отключен'}
-                      </span>
-                    </td>
-                    <td className="p-3 whitespace-nowrap text-gray-900">
-                      {u.paidUntil
-                        ? new Date(u.paidUntil).toLocaleDateString('ru-RU')
-                        : '—'}
-                    </td>
-                    <td className="p-3 text-sm text-gray-600">
-                      {u.phones?.[0]?.carModel}{' '}
-                      <span className="font-semibold">
-                        {u.phones?.[0]?.carPlate}
-                      </span>
-                    </td>
-                    <td className="p-3 text-sm text-gray-600">
-                      {u.address?.area}, ул. {u.address?.street}, д.{' '}
-                      {u.address?.house}
-                    </td>
-                  </tr>
+                  <UserTableRow
+                    key={u._id}
+                    user={u}
+                    onEdit={(userToEdit) => setSelectedUser(userToEdit)}
+                  />
                 ))
               )}
             </tbody>
           </table>
         </div>
+
+        {/* Модалка */}
+        {selectedUser && (
+          <UserEditModal
+            user={selectedUser}
+            onClose={() => setSelectedUser(null)}
+            onSaveSuccess={() => {
+              setSelectedUser(null);
+              fetchUsers();
+            }}
+          />
+        )}
       </div>
     </div>
   );

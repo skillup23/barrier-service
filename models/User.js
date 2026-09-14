@@ -27,12 +27,15 @@ const UserSchema = new Schema(
     ],
 
     entranceFeePaid: { type: Boolean, default: false },
+    // Добавлен статус 'frozen'
     status: {
       type: String,
-      enum: ['active', 'grace', 'disabled'],
+      enum: ['active', 'grace', 'disabled', 'frozen'],
       default: 'active',
     },
     paidUntil: { type: Date, default: Date.now },
+    // Добавлена дата заморозки
+    frozenAt: { type: Date, default: null },
   },
   { timestamps: true },
 );
