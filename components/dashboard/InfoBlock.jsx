@@ -36,10 +36,10 @@ export default function InfoBlock({ qrcodeImage }) {
               Номер для открытия шлагбаума
             </span>
             <a
-              href="tel:89991234567"
+              href="tel:89892762294"
               className="inline-flex items-center gap-2 text-lg font-bold text-blue-600 hover:text-blue-700 transition"
             >
-              📞 8 (999) 123-45-67
+              📞 8 (989) 276-22-94
             </a>
           </div>
 
@@ -48,12 +48,12 @@ export default function InfoBlock({ qrcodeImage }) {
               Техническая поддержка
             </span>
             <a
-              href="https://t.me"
+              href="https://max.ru/join/bbjQHb-pe53EP3-ef5J-Ezvurt14hnDTdNlZTx9vE8o"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-2 text-base font-bold text-sky-600 hover:text-sky-700 transition"
             >
-              💬 Написать в Telegram-чат
+              💬 Написать в MAX-чат
             </a>
           </div>
 
