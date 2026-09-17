@@ -10,7 +10,7 @@ import ReceiptUploadForm from '@/components/dashboard/ReceiptUploadForm';
 import ProfileEditSection from '@/components/dashboard/ProfileEditSection';
 import InfoBlock from '@/components/dashboard/InfoBlock';
 
-const qrcode = null;
+import qrcode from '@/public/qrBank.jpg';
 
 const cleanValue = (val) => {
   if (!val) return '';
