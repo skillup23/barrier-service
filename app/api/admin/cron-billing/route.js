@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import connectToDatabase from '@/lib/mongodb';
+import { logBarrierChange } from '@/lib/barrierLogger';
 import User from '@/models/User';
 
 export async function POST() {
@@ -13,7 +14,7 @@ export async function POST() {
 
     await connectToDatabase();
 
-    // Сегодняшний день в 00:00:00
+    // Сегодняшний день строго с 00:00:00
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -28,9 +29,9 @@ export async function POST() {
       if (user.status === 'frozen') {
         continue;
       }
-      // 1.Проверяем наличие даты
+
+      // 1. Если даты нет вовсе — блокируем
       if (!user.paidUntil) {
-        // Если даты нет вовсе — блокируем пользователя
         if (user.status !== 'disabled') {
           bulkOps.push({
             updateOne: {
@@ -39,6 +40,15 @@ export async function POST() {
             },
           });
           updatedDisabled++;
+
+          const uName =
+            `${user.fullName?.lastName || ''} ${user.fullName?.firstName || ''}`.trim();
+          await logBarrierChange({
+            phone: user.phone,
+            action: 'remove',
+            reason: 'Отсутствует дата оплаты',
+            userName: uName,
+          });
         }
         continue;
       }
@@ -46,7 +56,6 @@ export async function POST() {
       // 2. Безопасный парсинг даты
       const paidDate = new Date(user.paidUntil);
       if (isNaN(paidDate.getTime())) {
-        // Невалидный формат даты в базе (например, строковый мусор из Excel)
         if (user.status !== 'disabled') {
           bulkOps.push({
             updateOne: {
@@ -55,6 +64,15 @@ export async function POST() {
             },
           });
           updatedDisabled++;
+
+          const uName =
+            `${user.fullName?.lastName || ''} ${user.fullName?.firstName || ''}`.trim();
+          await logBarrierChange({
+            phone: user.phone,
+            action: 'remove',
+            reason: 'Некорректная дата оплаты',
+            userName: uName,
+          });
         }
         continue;
       }
@@ -75,8 +93,10 @@ export async function POST() {
         newStatus = 'active';
       }
 
-      // Если статус действительно изменился — добавляем в пакетное обновление
+      // Если статус изменился
       if (newStatus !== user.status) {
+        const oldStatus = user.status;
+
         bulkOps.push({
           updateOne: {
             filter: { _id: user._id },
@@ -84,20 +104,52 @@ export async function POST() {
           },
         });
 
-        if (newStatus === 'grace') updatedGrace++;
-        if (newStatus === 'disabled') updatedDisabled++;
-        if (newStatus === 'active') updatedActive++;
+        const uName =
+          `${user.fullName?.lastName || ''} ${user.fullName?.firstName || ''}`.trim();
+
+        if (newStatus === 'grace') {
+          updatedGrace++;
+          // Если он был заблокирован, а стал grace (например, вручную продлили срок),
+          // то ему снова разрешен проезд -> отправляем 'add'
+          if (oldStatus === 'disabled') {
+            await logBarrierChange({
+              phone: user.phone,
+              action: 'add',
+              reason: 'Восстановление доступа (в льготном периоде)',
+              userName: uName,
+            });
+          }
+        } else if (newStatus === 'disabled') {
+          updatedDisabled++;
+          // Блокировка -> удаляем из базы шлагбаума
+          await logBarrierChange({
+            phone: user.phone,
+            action: 'remove',
+            reason: `Задолженность (${overdueDays} дн.)`,
+            userName: uName,
+          });
+        } else if (newStatus === 'active') {
+          updatedActive++;
+          // Если он ДО этого был заблокирован, а теперь стал active -> добавляем в шлагбаум
+          if (oldStatus === 'disabled') {
+            await logBarrierChange({
+              phone: user.phone,
+              action: 'add',
+              reason: 'Продление срока оплаты (активирован)',
+              userName: uName,
+            });
+          }
+        }
       }
     }
 
-    // Выполняем одно пакетное обновление для всех 382 пользователей сразу
     if (bulkOps.length > 0) {
       await User.bulkWrite(bulkOps);
     }
 
     return NextResponse.json({
       success: true,
-      message: `Проверка завершена. Ожидают оплаты: ${updatedGrace}, Заблокировано: ${updatedDisabled}, Активировано: ${updatedActive}`,
+      message: `Проверка завершена. В Grace-период: ${updatedGrace}, Заблокировано: ${updatedDisabled}, Активировано: ${updatedActive}`,
     });
   } catch (error) {
     console.error('Критическая ошибка cron-billing:', error);

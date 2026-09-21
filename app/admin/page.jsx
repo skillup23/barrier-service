@@ -9,6 +9,7 @@ import Header from '@/components/Header';
 import AdminControls from '@/components/admin/AdminControls';
 import PaymentCard from '@/components/admin/PaymentCard';
 import ResetPasswordForm from '@/components/admin/ResetPasswordForm';
+import BarrierQueueCard from '@/components/admin/BarrierQueueCard';
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
@@ -20,6 +21,21 @@ export default function AdminDashboard() {
   const [loadingBilling, setLoadingBilling] = useState(false);
   const [visibleCount, setVisibleCount] = useState(20);
 
+  const [queueData, setQueueData] = useState(null);
+  const [loadingQueue, setLoadingQueue] = useState(false);
+
+  // Функция загрузки очереди жителей для шлагбаума
+  const fetchBarrierQueue = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/barrier-queue');
+      const data = await res.json();
+      if (res.ok) setQueueData(data.summary);
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
+  // Функция загрузки платежей
   const fetchAdminPayments = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/payments');
@@ -34,6 +50,7 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  // Проверка авторизации и роли администратора
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
@@ -43,11 +60,13 @@ export default function AdminDashboard() {
       } else {
         startTransition(() => {
           fetchAdminPayments();
+          fetchBarrierQueue();
         });
       }
     }
-  }, [status, session, router, fetchAdminPayments]);
+  }, [status, session, router, fetchAdminPayments, fetchBarrierQueue]);
 
+  // Если данные еще загружаются, показываем экран загрузки
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600 bg-gray-50">
@@ -78,6 +97,7 @@ export default function AdminDashboard() {
       if (res.ok) {
         setAdminMsg(data.message);
         fetchAdminPayments();
+        fetchBarrierQueue();
       } else {
         alert(data.error);
       }
@@ -96,6 +116,7 @@ export default function AdminDashboard() {
       if (res.ok) {
         setAdminMsg(data.message);
         fetchAdminPayments();
+        fetchBarrierQueue();
       } else {
         alert(data.error);
       }
@@ -103,6 +124,23 @@ export default function AdminDashboard() {
       console.error(err);
     } finally {
       setLoadingBilling(false);
+    }
+  };
+
+  // Очистка очереди шлагбаума
+  const handleClearQueue = async () => {
+    setLoadingQueue(true);
+    try {
+      const res = await fetch('/api/admin/barrier-queue', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        setAdminMsg(data.message);
+        fetchBarrierQueue();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingQueue(false);
     }
   };
 
@@ -127,6 +165,12 @@ export default function AdminDashboard() {
             {adminMsg}
           </div>
         )}
+
+        <BarrierQueueCard
+          queueData={queueData}
+          onClearQueue={handleClearQueue}
+          loading={loadingQueue}
+        />
 
         <AdminControls
           onRunBilling={handleRunBilling}

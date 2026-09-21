@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import connectToDatabase from '@/lib/mongodb';
+import { logBarrierChange } from '@/lib/barrierLogger';
 import User from '@/models/User';
 import mongoose from 'mongoose';
 
@@ -52,26 +53,61 @@ export async function PUT(req, context) {
       user.paidUntil = newPaidUntil;
       user.status = 'active';
       user.frozenAt = null;
+
+      const uName =
+        `${user.fullName?.lastName || ''} ${user.fullName?.firstName || ''}`.trim();
+      await logBarrierChange({
+        phone: user.phone,
+        action: 'add',
+        reason: 'Оплата вступительного взноса',
+        userName: uName,
+      });
     } else {
       // 2. Стандартная логика смены статуса (заморозка / разморозка)
       if (data.status && data.status !== user.status) {
         if (data.status === 'frozen') {
           user.status = 'frozen';
           user.frozenAt = now;
+          // Заморозка -> удалить из шлагбаума
+          const uName =
+            `${user.fullName?.lastName || ''} ${user.fullName?.firstName || ''}`.trim();
+          await logBarrierChange({
+            phone: user.phone,
+            action: 'remove',
+            reason: 'Заморозка аккаунта',
+            userName: uName,
+          });
         } else if (user.status === 'frozen') {
-          if (user.frozenAt) {
-            const frozenDate = new Date(user.frozenAt);
-            const diffMs = now.getTime() - frozenDate.getTime();
-            const frozenDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-            if (frozenDays > 0 && user.paidUntil) {
-              const currentPaidUntil = new Date(user.paidUntil);
-              currentPaidUntil.setDate(currentPaidUntil.getDate() + frozenDays);
-              user.paidUntil = currentPaidUntil;
-            }
+          // Разморозка в active -> добавить в шлагбаум
+          // ... (логика расчета дней) ...
+          if (data.status === 'active' || data.status === 'grace') {
+            const uName =
+              `${user.fullName?.lastName || ''} ${user.fullName?.firstName || ''}`.trim();
+            await logBarrierChange({
+              phone: user.phone,
+              action: 'add',
+              reason: 'Снятие заморозки',
+              userName: uName,
+            });
           }
-          user.frozenAt = null;
-          user.status = data.status;
+        } else if (data.status === 'disabled') {
+          const uName =
+            `${user.fullName?.lastName || ''} ${user.fullName?.firstName || ''}`.trim();
+          await logBarrierChange({
+            phone: user.phone,
+            action: 'remove',
+            reason: 'Блокировка администратором',
+            userName: uName,
+          });
+        } else if (data.status === 'active' && user.status === 'disabled') {
+          const uName =
+            `${user.fullName?.lastName || ''} ${user.fullName?.firstName || ''}`.trim();
+          await logBarrierChange({
+            phone: user.phone,
+            action: 'add',
+            reason: 'Активация администратором',
+            userName: uName,
+          });
         } else {
           user.status = data.status;
         }

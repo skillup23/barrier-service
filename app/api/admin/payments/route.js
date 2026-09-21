@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import connectToDatabase from '@/lib/mongodb';
+import { logBarrierChange } from '@/lib/barrierLogger';
 import Payment from '@/models/Payment';
 import User from '@/models/User';
 
@@ -99,6 +100,15 @@ export async function POST(req) {
           user.entranceFeePaid = true;
         }
         await user.save();
+
+        const uName =
+          `${user.fullName?.lastName || ''} ${user.fullName?.firstName || ''}`.trim();
+        await logBarrierChange({
+          phone: user.phone,
+          action: 'add',
+          reason: `Одобрен платеж ${payment.amount} ₽`,
+          userName: uName,
+        });
       }
     } else if (action === 'rejected') {
       payment.rejectionReason = rejectionReason || 'Неверный чек';
