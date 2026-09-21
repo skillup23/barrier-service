@@ -34,36 +34,59 @@ export async function PUT(req, context) {
       );
     }
 
-    // --- ЛОГИКА ЗАМОРОЗКИ / РАЗМОРОЗКИ ---
-    if (data.status && data.status !== user.status) {
-      const now = new Date();
+    const now = new Date();
 
-      if (data.status === 'frozen') {
-        // Включаем заморозку: фиксируем текущую дату
-        user.status = 'frozen';
-        user.frozenAt = now;
-      } else if (user.status === 'frozen') {
-        // Снимаем заморозку: вычисляем дни и сдвигаем paidUntil вперед
-        if (user.frozenAt) {
-          const frozenDate = new Date(user.frozenAt);
-          // Количество полных дней заморозки (минимум 1 день, если разморозили на следующий день)
-          const diffMs = now.getTime() - frozenDate.getTime();
-          const frozenDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    // 1. Проверяем установку вступительного взноса
+    // Если взнос ранее не был оплачен, а сейчас администратор ставит галочку
+    const isPayingEntranceFeeNow =
+      Boolean(data.entranceFeePaid) && !user.entranceFeePaid;
 
-          if (frozenDays > 0 && user.paidUntil) {
-            const currentPaidUntil = new Date(user.paidUntil);
-            currentPaidUntil.setDate(currentPaidUntil.getDate() + frozenDays);
-            user.paidUntil = currentPaidUntil;
+    if (data.entranceFeePaid !== undefined) {
+      user.entranceFeePaid = Boolean(data.entranceFeePaid);
+    }
+
+    if (isPayingEntranceFeeNow) {
+      // Активируем жителя и даем ровно 1 день от текущей даты
+      const newPaidUntil = new Date(now);
+      newPaidUntil.setDate(newPaidUntil.getDate() + 1);
+      user.paidUntil = newPaidUntil;
+      user.status = 'active';
+      user.frozenAt = null;
+    } else {
+      // 2. Стандартная логика смены статуса (заморозка / разморозка)
+      if (data.status && data.status !== user.status) {
+        if (data.status === 'frozen') {
+          user.status = 'frozen';
+          user.frozenAt = now;
+        } else if (user.status === 'frozen') {
+          if (user.frozenAt) {
+            const frozenDate = new Date(user.frozenAt);
+            const diffMs = now.getTime() - frozenDate.getTime();
+            const frozenDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            if (frozenDays > 0 && user.paidUntil) {
+              const currentPaidUntil = new Date(user.paidUntil);
+              currentPaidUntil.setDate(currentPaidUntil.getDate() + frozenDays);
+              user.paidUntil = currentPaidUntil;
+            }
           }
+          user.frozenAt = null;
+          user.status = data.status;
+        } else {
+          user.status = data.status;
         }
-        user.frozenAt = null;
-        user.status = data.status;
-      } else {
-        user.status = data.status;
+      }
+
+      // Обновляем дату вручную, только если статус не заморожен и дата передана
+      if (data.paidUntil && user.status !== 'frozen') {
+        const parsedDate = new Date(data.paidUntil);
+        if (!isNaN(parsedDate.getTime())) {
+          user.paidUntil = parsedDate;
+        }
       }
     }
 
-    // Основные поля
+    // 3. Обновляем основные поля (телефон, ФИО, адрес)
     if (data.phone) user.phone = data.phone.trim();
 
     if (data.fullName) {
@@ -82,18 +105,7 @@ export async function PUT(req, context) {
       };
     }
 
-    if (data.paidUntil && user.status !== 'frozen') {
-      const parsedDate = new Date(data.paidUntil);
-      if (!isNaN(parsedDate.getTime())) {
-        user.paidUntil = parsedDate;
-      }
-    }
-
-    if (data.entranceFeePaid !== undefined) {
-      user.entranceFeePaid = Boolean(data.entranceFeePaid);
-    }
-
-    // Автомобиль
+    // 4. Обновляем данные автомобиля
     if (data.carPlate !== undefined || data.carModel !== undefined) {
       if (!user.phones || user.phones.length === 0) {
         user.phones = [{ phone: user.phone, carPlate: '', carModel: '' }];

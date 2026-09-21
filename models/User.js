@@ -13,9 +13,9 @@ const UserSchema = new Schema(
     },
 
     address: {
-      area: { type: String, required: true },
-      street: { type: String, required: true },
-      house: { type: String, required: true },
+      area: { type: String, default: '' },
+      street: { type: String, default: '' },
+      house: { type: String, default: '' },
     },
 
     phones: [

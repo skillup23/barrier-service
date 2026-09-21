@@ -13,46 +13,82 @@ export async function GET() {
 
     await connectToDatabase();
 
-    // Выбираем жителей со статусом active или grace
-    const activeUsers = await User.find({
+    // 1. Получаем администратора
+    const adminUser = await User.findOne({ role: 'admin' });
+
+    // 2. Получаем жителей, у которых есть право проезда (active и grace)
+    // Замороженные ('frozen') и заблокированные ('disabled') не попадают
+    const activeResidents = await User.find({
       role: 'user',
       status: { $in: ['active', 'grace'] },
     });
 
-    // Собираем все разрешенные номера телефонов из массива phones
-    // \uFEFF добавляет Byte Order Mark (BOM) для корректного открытия UTF-8 в Excel
-    let csvContent = '\uFEFFid;telephon;out\n';
-    let counter = 1;
+    const addedPhones = new Set();
+    const phoneList = [];
 
-    activeUsers.forEach((user) => {
-      user.phones.forEach((item) => {
-        if (item.phone) {
-          let digits = item.phone.replace(/\D/g, '');
-          if (
-            digits.length === 11 &&
-            (digits.startsWith('7') || digits.startsWith('8'))
-          ) {
-            digits = digits.slice(1);
+    // Функция нормализации номера для шлагбаума (+79XXXXXXXXX)
+    const formatPhone = (rawPhone) => {
+      if (!rawPhone) return null;
+      let digits = String(rawPhone).replace(/\D/g, '');
+      if (digits.startsWith('8')) digits = '7' + digits.slice(1);
+      if (!digits.startsWith('7') && digits.length === 10)
+        digits = '7' + digits;
+      return digits.length === 11 ? `+${digits}` : null;
+    };
+
+    // 1. АДМИН ВСЕГДА НА 1-М МЕСТЕ ПОСЛЕ ЗАГОЛОВКОВ
+    if (adminUser) {
+      const adminPhone = formatPhone(adminUser.phone);
+      if (adminPhone) {
+        phoneList.push(adminPhone);
+        addedPhones.add(adminPhone);
+      }
+    }
+
+    // 2. Добавляем активных жителей
+    for (const user of activeResidents) {
+      // Основной номер
+      const mainPhone = formatPhone(user.phone);
+      if (mainPhone && !addedPhones.has(mainPhone)) {
+        phoneList.push(mainPhone);
+        addedPhones.add(mainPhone);
+      }
+
+      // Дополнительные номера телефонов (если есть)
+      if (Array.isArray(user.phones)) {
+        for (const item of user.phones) {
+          const extraPhone = formatPhone(item.phone);
+          if (extraPhone && !addedPhones.has(extraPhone)) {
+            phoneList.push(extraPhone);
+            addedPhones.add(extraPhone);
           }
-          // ПУНКТ 3: Формат с +7
-          const formattedPhone = `+7${digits}`;
-          csvContent += `${counter};${formattedPhone};0\n`;
-          counter++;
         }
-      });
+      }
+    }
+
+    // Собираем строки таблицы с разделителем ";"
+    // Формат: id;telephon;out
+    const csvLines = ['id;telephon;out'];
+
+    phoneList.forEach((phone, index) => {
+      const id = index + 1; // Порядковый номер начиная с 1
+      csvLines.push(`${id};${phone};0`);
     });
 
-    return new NextResponse(csvContent, {
+    // \ufeff — UTF-8 BOM, чтобы Excel и GSM-модули без сбоев читали кодировку
+    const csvContent = '\ufeff' + csvLines.join('\r\n');
+
+    return new Response(csvContent, {
       status: 200,
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': `attachment; filename="work_${new Date().toISOString().slice(0, 10)}.csv"`,
+        'Content-Disposition': 'attachment; filename="barrier_phones.csv"',
       },
     });
   } catch (error) {
-    console.error('Ошибка CSV:', error);
+    console.error('Ошибка выгрузки CSV:', error);
     return NextResponse.json(
-      { error: 'Не удалось сгенерировать CSV' },
+      { error: 'Ошибка генерации CSV' },
       { status: 500 },
     );
   }
