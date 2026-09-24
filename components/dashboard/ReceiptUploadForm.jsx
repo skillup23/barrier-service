@@ -91,10 +91,19 @@ export default function ReceiptUploadForm({ onUploadSuccess }) {
             id="receiptInput"
             type="file"
             accept=".pdf,image/jpeg,image/png,image/webp"
-            onChange={(e) => setFile(e.target.files[0])}
+            onChange={(e) => setFile(e.target.files[0] || null)}
             required
-            className="w-full text-sm text-gray-500 cursor-pointer"
+            className={`w-full text-sm px-4 py-2 cursor-pointer border rounded-lg focus:outline-none transition-colors duration-200 ${
+              file
+                ? 'bg-green-50 border-green-400 text-green-900'
+                : 'bg-white border-gray-300 text-gray-500 hover:border-gray-400'
+            }`}
           />
+          {file && (
+            <p className="text-xs text-green-600 mt-1 font-medium flex items-center gap-1">
+              ✓ Файл выбран: {file.name}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-2 pt-1">

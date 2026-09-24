@@ -9,6 +9,7 @@ import ResidentStatusCard from '@/components/dashboard/ResidentStatusCard';
 import ReceiptUploadForm from '@/components/dashboard/ReceiptUploadForm';
 import ProfileEditSection from '@/components/dashboard/ProfileEditSection';
 import InfoBlock from '@/components/dashboard/InfoBlock';
+import PaymentHistory from '@/components/dashboard/PaymentHistory';
 
 import qrcode from '@/public/qrBank.jpg';
 
@@ -26,6 +27,22 @@ export default function ResidentDashboard() {
   const router = useRouter();
   const [userData, setUserData] = useState(null);
   const [profileMsg, setProfileMsg] = useState('');
+  const [userPayments, setUserPayments] = useState([]);
+
+  //функция загрузки платежей
+  const fetchUserPayments = useCallback(async () => {
+    try {
+      const res = await fetch('/api/user/payments');
+      if (!res.ok) {
+        console.warn(`Не удалось загрузить платежи (код ${res.status})`);
+        return;
+      }
+      const data = await res.json();
+      setUserPayments(data.payments || []);
+    } catch (err) {
+      console.error('Ошибка при разборе платежей:', err);
+    }
+  }, []);
 
   const fetchUserProfile = useCallback(async () => {
     try {
@@ -43,9 +60,10 @@ export default function ResidentDashboard() {
     } else if (status === 'authenticated') {
       startTransition(() => {
         fetchUserProfile();
+        fetchUserPayments();
       });
     }
-  }, [status, router, fetchUserProfile]);
+  }, [status, router, fetchUserProfile, fetchUserPayments]);
 
   if (status === 'loading' || !userData) {
     return (
@@ -99,7 +117,14 @@ export default function ResidentDashboard() {
           dateStr={dateStr}
         />
 
-        <ReceiptUploadForm onUploadSuccess={fetchUserProfile} />
+        <ReceiptUploadForm
+          onUploadSuccess={() => {
+            fetchUserProfile();
+            fetchUserPayments();
+          }}
+        />
+
+        <PaymentHistory payments={userPayments} />
 
         <ProfileEditSection
           key={userData._id}
