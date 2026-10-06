@@ -8,7 +8,7 @@ export default function UserEditModal({ user, onClose, onSaveSuccess }) {
     lastName: user.fullName?.lastName || '',
     firstName: user.fullName?.firstName || '',
     middleName: user.fullName?.middleName || '',
-    area: user.address?.area || '',
+    area: user?.address?.area || 'Выберите СНТ / Район',
     street: user.address?.street || '',
     house: user.address?.house || '',
     status: user.status || 'active',
@@ -95,11 +95,14 @@ export default function UserEditModal({ user, onClose, onSaveSuccess }) {
               <input
                 type="text"
                 value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
+                onChange={(e) => {
+                  let val = e.target.value.replace(/[^\d+]/g, '');
+                  setFormData({ ...formData, phone: val });
+                }}
                 required
                 className="w-full px-3 py-2 border rounded-lg focus:outline-none"
+                pattern="\+7\d{10}"
+                title="Номер должен быть в формате +7 и 10 цифр"
               />
             </div>
             <div>
@@ -168,14 +171,35 @@ export default function UserEditModal({ user, onClose, onSaveSuccess }) {
               <label className="block text-xs font-semibold text-gray-600 mb-1">
                 СНТ / Район
               </label>
-              <input
+              <select
+                value={formData.area}
+                onChange={(e) =>
+                  setFormData({ ...formData, area: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
+              >
+                <option value="Выберите СНТ / Район">
+                  Выберите СНТ / Район
+                </option>
+                <option value="СНТ_Ветерок">СНТ_Ветерок</option>
+                <option value="СНТ_Ветерок-2">СНТ_Ветерок-2</option>
+                <option value="СНТ_Дружба-1">СНТ_Дружба-1</option>
+                <option value="СНТ_Радист">СНТ_Радист</option>
+                <option value="СНТ_Животновод">СНТ_Животновод</option>
+                <option value="СНТ_Мечта">СНТ_Мечта</option>
+                <option value="СНТ_Солнышко">СНТ_Солнышко</option>
+                <option value="СНТ_КНИИСХ">СНТ_КНИИСХ</option>
+                <option value="АДМИНИСТРАЦИЯ">АДМИНИСТРАЦИЯ</option>
+                <option value="Жители_района">Жители_района</option>
+              </select>
+              {/* <input
                 type="text"
                 value={formData.area}
                 onChange={(e) =>
                   setFormData({ ...formData, area: e.target.value })
                 }
                 className="w-full px-3 py-2 border rounded-lg focus:outline-none"
-              />
+              /> */}
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">

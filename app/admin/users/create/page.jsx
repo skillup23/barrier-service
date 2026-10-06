@@ -11,14 +11,14 @@ export default function CreateUserPage() {
 
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('password123');
-  const [lastName, setLastName] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [middleName, setMiddleName] = useState('');
-  const [area, setArea] = useState('СНТ_Ветерок');
-  const [street, setStreet] = useState('');
-  const [house, setHouse] = useState('');
-  const [carPlate, setCarPlate] = useState('');
-  const [carModel, setCarModel] = useState('');
+  const [lastName, setLastName] = useState('Заполнить');
+  const [firstName, setFirstName] = useState('Заполнить');
+  const [middleName, setMiddleName] = useState('Заполнить');
+  const [area, setArea] = useState('Выберите СНТ / Район');
+  const [street, setStreet] = useState('Заполнить');
+  const [house, setHouse] = useState('Заполнить');
+  const [carPlate, setCarPlate] = useState('Заполнить');
+  const [carModel, setCarModel] = useState('Заполнить');
   const [entranceFeePaid, setEntranceFeePaid] = useState(true);
 
   const [error, setError] = useState('');
@@ -101,9 +101,14 @@ export default function CreateUserPage() {
                 type="text"
                 placeholder="+79991112233"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => {
+                  let val = e.target.value.replace(/[^\d+]/g, '');
+                  setPhone(val);
+                }}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
+                pattern="\+7\d{10}"
+                title="Номер должен быть в формате +7 и 10 цифр"
               />
             </div>
             <div>
@@ -161,13 +166,32 @@ export default function CreateUserPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 СНТ / Район *
               </label>
-              <input
+              <select
+                value={area}
+                onChange={(e) => setArea(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
+              >
+                <option value="Выберите СНТ / Район">
+                  Выберите СНТ / Район
+                </option>
+                <option value="СНТ_Ветерок">СНТ_Ветерок</option>
+                <option value="СНТ_Ветерок-2">СНТ_Ветерок-2</option>
+                <option value="СНТ_Дружба-1">СНТ_Дружба-1</option>
+                <option value="СНТ_Радист">СНТ_Радист</option>
+                <option value="СНТ_Животновод">СНТ_Животновод</option>
+                <option value="СНТ_Мечта">СНТ_Мечта</option>
+                <option value="СНТ_Солнышко">СНТ_Солнышко</option>
+                <option value="СНТ_КНИИСХ">СНТ_КНИИСХ</option>
+                <option value="АДМИНИСТРАЦИЯ">АДМИНИСТРАЦИЯ</option>
+                <option value="Жители_района">Жители_района</option>
+              </select>
+              {/* <input
                 type="text"
                 value={area}
                 onChange={(e) => setArea(e.target.value)}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
-              />
+              /> */}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

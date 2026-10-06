@@ -95,20 +95,25 @@ export async function POST(req) {
         }
 
         user.paidUntil = newPaidUntil;
+
+        const wasDisabled = user.status === 'disabled';
         user.status = 'active';
         if (payment.isEntranceFee) {
           user.entranceFeePaid = true;
         }
+        user.frozenAt = null;
         await user.save();
 
-        const uName =
-          `${user.fullName?.lastName || ''} ${user.fullName?.firstName || ''}`.trim();
-        await logBarrierChange({
-          phone: user.phone,
-          action: 'add',
-          reason: `Одобрен платеж ${payment.amount} ₽`,
-          userName: uName,
-        });
+        if (wasDisabled) {
+          const uName =
+            `${user.fullName?.lastName || ''} ${user.fullName?.firstName || ''}`.trim();
+          await logBarrierChange({
+            phone: user.phone,
+            action: 'add',
+            reason: `Одобрен платёж ${payment.amount} ₽ (разблокировка)`,
+            userName: uName,
+          });
+        }
       }
     } else if (action === 'rejected') {
       payment.rejectionReason = rejectionReason || 'Неверный чек';

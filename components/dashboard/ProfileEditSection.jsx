@@ -26,7 +26,9 @@ export default function ProfileEditSection({
     cleanValue(user?.fullName?.middleName),
   );
 
-  const [area, setArea] = useState(() => cleanValue(user?.address?.area));
+  const [area, setArea] = useState(
+    () => cleanValue(user?.address?.area) || 'Выберите СНТ / Район',
+  );
   const [street, setStreet] = useState(() => cleanValue(user?.address?.street));
   const [house, setHouse] = useState(() => cleanValue(user?.address?.house));
 
@@ -136,13 +138,30 @@ export default function ProfileEditSection({
             Адрес участка / дома
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <input
+            <select
+              value={area}
+              onChange={(e) => setArea(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
+            >
+              <option value="Выберите СНТ / Район">Выберите СНТ / Район</option>
+              <option value="СНТ_Ветерок">СНТ_Ветерок</option>
+              <option value="СНТ_Ветерок-2">СНТ_Ветерок-2</option>
+              <option value="СНТ_Дружба-1">СНТ_Дружба-1</option>
+              <option value="СНТ_Радист">СНТ_Радист</option>
+              <option value="СНТ_Животновод">СНТ_Животновод</option>
+              <option value="СНТ_Мечта">СНТ_Мечта</option>
+              <option value="СНТ_Солнышко">СНТ_Солнышко</option>
+              <option value="СНТ_КНИИСХ">СНТ_КНИИСХ</option>
+              <option value="АДМИНИСТРАЦИЯ">АДМИНИСТРАЦИЯ</option>
+              <option value="Жители_района">Жители_района</option>
+            </select>
+            {/* <input
               type="text"
               placeholder="СНТ / Район"
               value={area}
               onChange={(e) => setArea(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
-            />
+            /> */}
             <input
               type="text"
               placeholder="Улица"

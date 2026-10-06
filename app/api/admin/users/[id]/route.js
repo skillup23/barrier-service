@@ -36,9 +36,11 @@ export async function PUT(req, context) {
     }
 
     const now = new Date();
+    const oldStatus = user.status;
+    const uName =
+      `${user.fullName?.lastName || ''} ${user.fullName?.firstName || ''}`.trim();
 
     // 1. Проверяем установку вступительного взноса
-    // Если взнос ранее не был оплачен, а сейчас администратор ставит галочку
     const isPayingEntranceFeeNow =
       Boolean(data.entranceFeePaid) && !user.entranceFeePaid;
 
@@ -54,54 +56,80 @@ export async function PUT(req, context) {
       user.status = 'active';
       user.frozenAt = null;
 
-      const uName =
-        `${user.fullName?.lastName || ''} ${user.fullName?.firstName || ''}`.trim();
-      await logBarrierChange({
-        phone: user.phone,
-        action: 'add',
-        reason: 'Оплата вступительного взноса',
-        userName: uName,
-      });
+      // В очередь на добавление пишем, если он был отключён от шлагбаума (disabled или frozen)
+      if (oldStatus === 'disabled' || oldStatus === 'frozen') {
+        await logBarrierChange({
+          phone: user.phone,
+          action: 'add',
+          reason: 'Оплата вступительного взноса (активация)',
+          userName: uName,
+        });
+      }
     } else {
-      // 2. Стандартная логика смены статуса (заморозка / разморозка)
+      // 2. Логика смены статусов и отправки в SMS-очередь
       if (data.status && data.status !== user.status) {
+        // --- ПЕРЕХОД В ЗАМОРОЗКУ ---
         if (data.status === 'frozen') {
           user.status = 'frozen';
           user.frozenAt = now;
-          // Заморозка -> удалить из шлагбаума
-          const uName =
-            `${user.fullName?.lastName || ''} ${user.fullName?.firstName || ''}`.trim();
-          await logBarrierChange({
-            phone: user.phone,
-            action: 'remove',
-            reason: 'Заморозка аккаунта',
-            userName: uName,
-          });
-        } else if (user.status === 'frozen') {
-          // Разморозка в active -> добавить в шлагбаум
-          // ... (логика расчета дней) ...
-          if (data.status === 'active' || data.status === 'grace') {
-            const uName =
-              `${user.fullName?.lastName || ''} ${user.fullName?.firstName || ''}`.trim();
+
+          // Если до этого он был активен/в грейсе, то удаляем из шлагбаума
+          if (oldStatus === 'active' || oldStatus === 'grace') {
             await logBarrierChange({
               phone: user.phone,
-              action: 'add',
-              reason: 'Снятие заморозки',
+              action: 'remove',
+              reason: 'Заморозка доступа (отпуск/пауза)',
               userName: uName,
             });
           }
+
+          // --- ВЫХОД ИЗ ЗАМОРОЗКИ ---
+        } else if (oldStatus === 'frozen') {
+          // Компенсируем дни, которые пользователь провёл в заморозке
+          if (user.frozenAt) {
+            const frozenDate = new Date(user.frozenAt);
+            const diffMs = now.getTime() - frozenDate.getTime();
+            const frozenDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            if (frozenDays > 0 && user.paidUntil) {
+              const currentPaidUntil = new Date(user.paidUntil);
+              currentPaidUntil.setDate(currentPaidUntil.getDate() + frozenDays);
+              user.paidUntil = currentPaidUntil;
+            }
+          }
+          user.frozenAt = null;
+          user.status = data.status;
+
+          // Если разморозили в active или grace — возвращаем номер в шлагбаум
+          if (data.status === 'active' || data.status === 'grace') {
+            await logBarrierChange({
+              phone: user.phone,
+              action: 'add',
+              reason: 'Разморозка (доступ восстановлен)',
+              userName: uName,
+            });
+          }
+
+          // --- БЛОКИРОВКА ---
         } else if (data.status === 'disabled') {
-          const uName =
-            `${user.fullName?.lastName || ''} ${user.fullName?.firstName || ''}`.trim();
-          await logBarrierChange({
-            phone: user.phone,
-            action: 'remove',
-            reason: 'Блокировка администратором',
-            userName: uName,
-          });
-        } else if (data.status === 'active' && user.status === 'disabled') {
-          const uName =
-            `${user.fullName?.lastName || ''} ${user.fullName?.firstName || ''}`.trim();
+          user.status = 'disabled';
+
+          // Удаляем из шлагбаума, если до этого был доступ
+          if (oldStatus === 'active' || oldStatus === 'grace') {
+            await logBarrierChange({
+              phone: user.phone,
+              action: 'remove',
+              reason: 'Блокировка администратором',
+              userName: uName,
+            });
+          }
+
+          // --- АКТИВАЦИЯ ИЗ БЛОКИРОВКИ ---
+        } else if (
+          (data.status === 'active' || data.status === 'grace') &&
+          oldStatus === 'disabled'
+        ) {
+          user.status = data.status;
           await logBarrierChange({
             phone: user.phone,
             action: 'add',
@@ -113,7 +141,7 @@ export async function PUT(req, context) {
         }
       }
 
-      // Обновляем дату вручную, только если статус не заморожен и дата передана
+      // Обновляем дату вручную, если передана и статус не заморожен
       if (data.paidUntil && user.status !== 'frozen') {
         const parsedDate = new Date(data.paidUntil);
         if (!isNaN(parsedDate.getTime())) {
@@ -122,7 +150,7 @@ export async function PUT(req, context) {
       }
     }
 
-    // 3. Обновляем основные поля (телефон, ФИО, адрес)
+    // 3. Обновляем основные поля
     if (data.phone) user.phone = data.phone.trim();
 
     if (data.fullName) {
@@ -133,11 +161,17 @@ export async function PUT(req, context) {
       };
     }
 
-    if (data.address) {
+    if (
+      data.address ||
+      data.area !== undefined ||
+      data.street !== undefined ||
+      data.house !== undefined
+    ) {
       user.address = {
-        area: data.address.area ?? user.address?.area ?? '',
-        street: data.address.street ?? user.address?.street ?? '',
-        house: data.address.house ?? user.address?.house ?? '',
+        area: data.address?.area ?? data.area ?? user.address?.area ?? '',
+        street:
+          data.address?.street ?? data.street ?? user.address?.street ?? '',
+        house: data.address?.house ?? data.house ?? user.address?.house ?? '',
       };
     }
 
